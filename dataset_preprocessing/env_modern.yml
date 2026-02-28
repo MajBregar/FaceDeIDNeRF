@@ -1,0 +1,26 @@
+name: modern_preprocessing
+
+channels:
+  - nvidia
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.10
+
+  # ---- CUDA 12.4 (explicit components, no meta toolkit) ----
+  - cuda-nvcc=12.4
+  - cuda-cudart-dev=12.4
+  - cuda-libraries-dev=12.4
+  - cuda-command-line-tools=12.4
+
+  # ---- GCC 12 (required for CUDA 12.4 compatibility) ----
+  - gcc_linux-64=12
+  - gxx_linux-64=12
+
+  # ---- Build tools ----
+  - cmake
+  - ninja
+  - setuptools
+
+  - pip

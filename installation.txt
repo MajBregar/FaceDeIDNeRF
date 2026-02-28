@@ -1,3 +1,5 @@
+git submodule update --init --recursive
+
 conda env create -f env_A100.yml
 conda activate deidnerf
 
@@ -9,3 +11,10 @@ export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 
 sed -i "s/torch.pow(((image + 0.055) \/ 1.055), 2.4)/torch.pow(((image.abs() + 0.055) \/ 1.055), 2.4)/" \
 $(python -c "import kornia, os; print(os.path.join(os.path.dirname(kornia.__file__), 'color/rgb.py'))")
+
+#dataset preprocessing
+gdown 1BlDBB4dLLrlN3cJhVL4nmrd_g6Jx6uP0
+gdown 1bw5Xf8C12pWmcMhNEu6PtsYVZkVucEN6
+
+git clone https://github.com/deepinsight/insightface.git
+cp -r ./insightface/recognition/arcface_torch ./models/
