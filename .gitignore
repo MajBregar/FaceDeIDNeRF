@@ -25,3 +25,7 @@ vids/
 
 stylegan3/results
 dataset_preprocessing
+
+networks/model_ir_se50.pth
+networks/vgg16.pt
+networks/ffhqrebalanced512-128.pkl

@@ -1,0 +1,11 @@
+conda env create -f env_A100.yml
+conda activate deidnerf
+
+bash download_models.sh
+
+export CUDA_HOME=$CONDA_PREFIX
+export PATH=$CUDA_HOME/bin:$PATH
+export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
+
+sed -i "s/torch.pow(((image + 0.055) \/ 1.055), 2.4)/torch.pow(((image.abs() + 0.055) \/ 1.055), 2.4)/" \
+$(python -c "import kornia, os; print(os.path.join(os.path.dirname(kornia.__file__), 'color/rgb.py'))")
