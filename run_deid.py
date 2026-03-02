@@ -25,8 +25,8 @@ for i, name in gpu_info:
 gpu_ids_str = ",".join(str(i) for i, _ in gpu_info)
 
 # Parameters
-pre_iterations = 300
-post_iterations = 100
+pre_iterations = 2
+post_iterations = 2
 dif_mult = 1 #higher numbers require more vram
 video_mult = 3
 output_dir = "./output/"
