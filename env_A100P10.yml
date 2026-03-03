@@ -14,7 +14,6 @@ dependencies:
   - imageio=2.31
   - kornia=0.6.12
   - matplotlib-inline=0.1.6
-  - ninja
   - requests=2.31
   - tqdm=4.66
 
@@ -101,3 +100,5 @@ dependencies:
       - werkzeug==2.3.7
       - setuptools==68.2.2
       - facenet-pytorch
+      - dominate
+      - scikit-image
