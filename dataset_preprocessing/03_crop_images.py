@@ -14,7 +14,7 @@ from PIL import Image
 import numpy as np
 import sys
 sys.path.append('Deep3DFaceRecon_pytorch')
-from preprocess_fix import align_img
+from fixed_util.preprocess import align_img
 from Deep3DFaceRecon_pytorch.util.load_mats import load_lm3d
 
 

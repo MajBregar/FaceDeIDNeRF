@@ -23,7 +23,7 @@ import argparse
 import torch
 import sys
 sys.path.append('../../eg3d')
-from camera_utils import create_cam2world_matrix
+from fixed_util.camera_utils import create_cam2world_matrix
 
 COMPRESS_LEVEL=0
     

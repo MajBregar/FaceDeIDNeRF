@@ -8,7 +8,7 @@ export CUDA_HOME=$CONDA_PREFIX && export PATH=$CUDA_HOME/bin:$PATH && export LD_
 
 pip install --no-build-isolation git+https://github.com/NVlabs/nvdiffrast.git
 
-bash download_models.sh
+bash download_deid_models.sh
 
 sed -i "s/torch.pow(((image + 0.055) \/ 1.055), 2.4)/torch.pow(((image.abs() + 0.055) \/ 1.055), 2.4)/" \
 $(python -c "import kornia, os; print(os.path.join(os.path.dirname(kornia.__file__), 'color/rgb.py'))")
@@ -18,5 +18,7 @@ cd ./dataset_preprocessing/Deep3DFaceRecon_pytorch
 git clone https://github.com/deepinsight/insightface.git
 cp -r ./insightface/recognition/arcface_torch ./models/
 cd ..
+
+bash download_image_preprocessing_models.sh
 
 download final model 01_MorphableModel.mat

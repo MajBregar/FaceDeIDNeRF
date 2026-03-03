@@ -2,16 +2,27 @@
 """
 
 import os
-from Deep3DFaceRecon_pytorch.options.test_options import TestOptions
-from Deep3DFaceRecon_pytorch.data import create_dataset
+import sys
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = SCRIPT_DIR + '/' + "Deep3DFaceRecon_pytorch"
+
+if SCRIPT_DIR not in sys.path:
+    sys.path.insert(0, SCRIPT_DIR)
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
+
+
+from options.test_options import TestOptions
+from data import create_dataset
 from models import create_model
-from Deep3DFaceRecon_pytorch.util.visualizer import MyVisualizer
-from preprocess_fix import align_img
+from util.visualizer import MyVisualizer
+from fixed_util.preprocess import align_img
 from PIL import Image
 import numpy as np
-from Deep3DFaceRecon_pytorch.util.load_mats import load_lm3d
+from fixed_util.load_mats import load_lm3d
 import torch 
-from Deep3DFaceRecon_pytorch.data.flist_dataset import default_flist_reader
+from data.flist_dataset import default_flist_reader
 from scipy.io import loadmat, savemat
 
 def get_data_path(root='examples'):
@@ -62,13 +73,20 @@ def main(rank, opt, name='examples'):
         model.set_input(data)  # unpack data from data loader
         model.test()           # run inference
         visuals = model.get_current_visuals()  # get image results
-        visualizer.display_current_results(visuals, 0, opt.epoch, dataset=name.split(os.path.sep)[-1], 
-            save_results=True, count=i, name=img_name, add_image=False)
 
-        model.save_mesh(os.path.join(visualizer.img_dir, name.split(os.path.sep)[-1], 'epoch_%s_%06d'%(opt.epoch, 0),img_name+'.obj')) # save reconstruction meshes
-        model.save_coeff(os.path.join(visualizer.img_dir, name.split(os.path.sep)[-1], 'epoch_%s_%06d'%(opt.epoch, 0),img_name+'.mat')) # save predicted coefficients
+        OUTPUT_ROOT = os.path.join(opt.img_folder, "d3r_results")
+        os.makedirs(OUTPUT_ROOT, exist_ok=True)
+
+        visualizer.display_current_results(visuals, 0, opt.epoch, dataset=name.split(os.path.sep)[-1], save_results=True, count=i, name=img_name, add_image=False)
+        model.save_mesh(os.path.join(OUTPUT_ROOT, img_name + ".obj"))
+        model.save_coeff(os.path.join(OUTPUT_ROOT, img_name + ".mat"))
 
 if __name__ == '__main__':
-    opt = TestOptions().parse()  # get test options
-    main(0, opt,opt.img_folder)
+    opt = TestOptions()
+    opt.checkpoints_dir = REPO_ROOT + '/' + 'checkpoints'
+    opt.bfm_folder = REPO_ROOT + '/' + 'BFM'
+    opt = opt.parse()
+    print(opt)
+    print("AFTER")
+    main(0, opt, opt.img_folder)
     

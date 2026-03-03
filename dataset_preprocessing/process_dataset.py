@@ -10,6 +10,7 @@
 
 import os
 import argparse
+import sys
 parser = argparse.ArgumentParser()
 parser.add_argument('--indir', type=str, required=True)
 args = parser.parse_args()
@@ -21,22 +22,21 @@ os.system(command)
 
 out_folder = args.indir.split("/")[-2] if args.indir.endswith("/") else args.indir.split("/")[-1]
 
-# # run Deep3DFaceRecon
-command = "python 02_deep3drecon_test.py --img_folder=" + args.indir + " --gpu_ids=0 --name=model --epoch=20"
+command = f"python 02_deep3drecon_test.py " + f"--img_folder={args.indir} --gpu_ids=0 --name=model --epoch=20"
 print(command)
 os.system(command)
 
-# # crop out the input image
-command = "python 03_crop_images.py --indir=" + args.indir
-print(command)
-os.system(command)
+# #crop out the input image
+# command = "python 03_crop_images.py --indir=" + args.indir
+# print(command)
+# os.system(command)
 
 # # convert the pose to our format
-command = f"python 04_3dface2idr_mat.py --in_root Deep3DFaceRecon_pytorch/checkpoints/model/results/{out_folder}/epoch_20_000000 --out_path {os.path.join(args.indir, 'crop', 'cameras.json')}"
-print(command)
-os.system(command)
+# command = f"python 04_3dface2idr_mat.py --in_root Deep3DFaceRecon_pytorch/checkpoints/model/results/{out_folder}/epoch_20_000000 --out_path {os.path.join(args.indir, 'crop', 'cameras.json')}"
+# print(command)
+# os.system(command)
 
-# # additional correction to match the submission version
-command = f"python 05_preprocess_cameras.py --source {os.path.join(args.indir, 'crop')} --dest {out_folder} --mode orig"
-print(command)
-os.system(command)
+# # # additional correction to match the submission version
+# command = f"python 05_preprocess_cameras.py --source {os.path.join(args.indir, 'crop')} --dest {out_folder} --mode orig"
+# print(command)
+# os.system(command)
