@@ -15,7 +15,7 @@ torch.set_flush_denormal(True)
 import click
 import numpy as np
 import dnnlib
-import legacy
+import utils.legacy as legacy
 from PIL import Image
 
 # -----------------------------------------------------------------------------

@@ -15,13 +15,13 @@ torch.set_flush_denormal(True)
 import click
 import numpy as np
 import dnnlib
-import legacy
+import utils.legacy as legacy
 from PIL import Image
 
 # -----------------------------------------------------------------------------
 
 TRUNCATION_INTERVAL = (0.0, 1.0)
-TRUNCATION_STEP = 0.01
+TRUNCATION_STEP = 0.02
 
 # -----------------------------------------------------------------------------
 
@@ -105,7 +105,7 @@ def main(
     frames = []
 
     truncation_mode = ['avg', 'true_rnd', 'rnd_avg_offset', 'mapping_rnd']
-    select_trunc = 3
+    select_trunc = 0
 
     for trunc in trunc_values:
 
@@ -151,7 +151,7 @@ def main(
         gif_path,
         save_all=True,
         append_images=frames[1:],
-        duration=100,
+        duration=150,
         loop=0
     )
 

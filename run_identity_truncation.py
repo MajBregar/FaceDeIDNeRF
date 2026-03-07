@@ -30,7 +30,7 @@ video_mult = 3
 output_dir = "./output/"
 image_dir = '/home/real_images/final_output'
 
-image_ids = ["maj"]
+image_ids = ["memzl"]
 input_dict = {
         "lamda_id": 1.0, #0.2, 
         "lamda_origin": 1.0, #0.2, 

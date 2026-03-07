@@ -27,7 +27,7 @@ import dnnlib
 import numpy as np
 import torch
 torch.autograd.set_detect_anomaly(True)
-import legacy
+import utils.legacy as legacy
 from torchvision.transforms import transforms
 from torch.autograd import Variable
 from torchvision.utils import make_grid

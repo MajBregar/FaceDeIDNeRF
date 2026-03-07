@@ -25,14 +25,14 @@ for i, name in gpu_info:
 gpu_ids_str = ",".join(str(i) for i, _ in gpu_info)
 
 # Parameters
-pre_iterations = 1000
-post_iterations = 400
+pre_iterations = 2
+post_iterations = 2
 dif_mult = 2 #higher numbers require more vram
 video_mult = 3
 output_dir = "./output/"
 image_dir = '/home/real_images/final_output'
 
-image_ids = ["maj"]
+image_ids = ["memzl"]
 input_dict = {
         "lamda_id": 1.0, #0.2, 
         "lamda_origin": 1.0, #0.2, 
