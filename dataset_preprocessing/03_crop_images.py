@@ -24,7 +24,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     lm_dir = os.path.join(args.indir, "detections")
-    img_files = sorted([x for x in os.listdir(args.indir) if x.lower().endswith(".png") or x.lower().endswith(".jpg")])
+    img_files = sorted([x for x in os.listdir(args.indir) if x.lower().endswith(".png") or x.lower().endswith(".jpg") or x.lower().endswith(".jpeg")])
     lm_files = sorted([x for x in os.listdir(lm_dir) if x.endswith(".txt")])
 
     lm3d_std = load_lm3d("Deep3DFaceRecon_pytorch/BFM/") 

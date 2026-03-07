@@ -2,9 +2,9 @@ git submodule update --init --recursive
 
 source ~/miniconda3/etc/profile.d/conda.sh
 conda env create -f env_A100P10.yml
-conda activate deidnerf
+conda activate deidnerf_py10
 
-export CUDA_HOME=$CONDA_PREFIX && export PATH=$CUDA_HOME/bin:$PATH && export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH && export TORCH_CUDA_ARCH_LIST="8.0 8.6"
+export CUDA_HOME=$CONDA_PREFIX && export PATH=$CUDA_HOME/bin:$PATH && export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH && export TORCH_CUDA_ARCH_LIST="8.0 8.6 8.9"
 
 pip install --no-build-isolation git+https://github.com/NVlabs/nvdiffrast.git
 

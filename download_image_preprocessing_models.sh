@@ -6,4 +6,4 @@ curl -L \
 
 curl -L \
 'https://drive.usercontent.google.com/download?id=1bw5Xf8C12pWmcMhNEu6PtsYVZkVucEN6&export=download&confirm=t' \
--o ./dataset_preprocessing/Deep3DFaceRecon_pytorch/BFM/Exp_Pca.bin
+-o ./dataset_preprocessing/BFM/Exp_Pca.bin

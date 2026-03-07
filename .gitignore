@@ -28,3 +28,5 @@ stylegan3/results
 networks/model_ir_se50.pth
 networks/vgg16.pt
 networks/ffhqrebalanced512-128.pkl
+
+dataset_preprocessing/BFM/Exp_Pca.bin

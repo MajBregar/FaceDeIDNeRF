@@ -27,16 +27,16 @@ print(command)
 os.system(command)
 
 # #crop out the input image
-# command = "python 03_crop_images.py --indir=" + args.indir
-# print(command)
-# os.system(command)
+command = "python 03_crop_images.py --indir=" + args.indir
+print(command)
+os.system(command)
 
 # # convert the pose to our format
-# command = f"python 04_3dface2idr_mat.py --in_root Deep3DFaceRecon_pytorch/checkpoints/model/results/{out_folder}/epoch_20_000000 --out_path {os.path.join(args.indir, 'crop', 'cameras.json')}"
-# print(command)
-# os.system(command)
+command = f"python 04_3dface2idr_mat.py --in_root {args.indir}/d3r_results --out_path {os.path.join(args.indir, 'crop', 'cameras.json')}"
+print(command)
+os.system(command)
 
 # # # additional correction to match the submission version
-# command = f"python 05_preprocess_cameras.py --source {os.path.join(args.indir, 'crop')} --dest {out_folder} --mode orig"
-# print(command)
-# os.system(command)
+command = f"python 05_preprocess_cameras.py --source {os.path.join(args.indir, 'crop')} --dest {args.indir}/final_output --mode orig"
+print(command)
+os.system(command)

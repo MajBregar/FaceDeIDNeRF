@@ -27,8 +27,8 @@ from scipy.io import loadmat, savemat
 
 def get_data_path(root='examples'):
     
-    im_path = [os.path.join(root, i) for i in sorted(os.listdir(root)) if i.endswith('png') or i.endswith('jpg')]
-    lm_path = [i.replace('png', 'txt').replace('jpg', 'txt') for i in im_path]
+    im_path = [os.path.join(root, i) for i in sorted(os.listdir(root)) if i.endswith('png') or i.endswith('jpg') or i.endswith('jpeg')]
+    lm_path = [i.replace('png', 'txt').replace('jpg', 'txt').replace('jpeg', 'txt') for i in im_path]
     lm_path = [os.path.join(i.replace(i.split(os.path.sep)[-1],''),'detections',i.split(os.path.sep)[-1]) for i in lm_path]
 
     return im_path, lm_path
@@ -61,10 +61,12 @@ def main(rank, opt, name='examples'):
 
     for i in range(len(im_path)):
         print(i, im_path[i])
-        img_name = im_path[i].split(os.path.sep)[-1].replace('.png','').replace('.jpg','')
+        img_name = im_path[i].split(os.path.sep)[-1].replace('.png','').replace('.jpg','').replace('.jpeg','')
+
         if not os.path.isfile(lm_path[i]):
             print("%s is not found !!!"%lm_path[i])
             continue
+
         im_tensor, lm_tensor = read_data(im_path[i], lm_path[i], lm3d_std)
         data = {
             'imgs': im_tensor,
@@ -77,16 +79,14 @@ def main(rank, opt, name='examples'):
         OUTPUT_ROOT = os.path.join(opt.img_folder, "d3r_results")
         os.makedirs(OUTPUT_ROOT, exist_ok=True)
 
-        visualizer.display_current_results(visuals, 0, opt.epoch, dataset=name.split(os.path.sep)[-1], save_results=True, count=i, name=img_name, add_image=False)
+        #visualizer.display_current_results(visuals, 0, opt.epoch, dataset=name.split(os.path.sep)[-1], save_results=False, count=i, name=img_name, add_image=False)
         model.save_mesh(os.path.join(OUTPUT_ROOT, img_name + ".obj"))
         model.save_coeff(os.path.join(OUTPUT_ROOT, img_name + ".mat"))
 
 if __name__ == '__main__':
-    opt = TestOptions()
+    opt = TestOptions().parse()
     opt.checkpoints_dir = REPO_ROOT + '/' + 'checkpoints'
     opt.bfm_folder = REPO_ROOT + '/' + 'BFM'
-    opt = opt.parse()
-    print(opt)
-    print("AFTER")
+    #print(opt)
     main(0, opt, opt.img_folder)
     
