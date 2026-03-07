@@ -107,14 +107,24 @@ if __name__ == '__main__':
         else:
             assert False, "invalid mode"
         intrinsics = fix_intrinsics(intrinsics)
-        label = np.concatenate([pose.reshape(-1), intrinsics.reshape(-1)]).tolist()
-            
+
+        # label = np.concatenate([pose.reshape(-1), intrinsics.reshape(-1)]).tolist()
+        # image_path = os.path.join(args.source, filename)
+        # img = Image.open(image_path)
+        # dataset["labels"].append([filename, label])
+        # os.makedirs(os.path.dirname(os.path.join(args.dest, filename)), exist_ok=True)
+        # img.save(os.path.join(args.dest, filename))
+
+        camera_vec = np.concatenate([pose.reshape(-1), intrinsics.reshape(-1)])
         image_path = os.path.join(args.source, filename)
         img = Image.open(image_path)
-
-        dataset["labels"].append([filename, label])
-        os.makedirs(os.path.dirname(os.path.join(args.dest, filename)), exist_ok=True)
-        img.save(os.path.join(args.dest, filename))
+        dest_image_path = os.path.join(args.dest, filename)
+        os.makedirs(os.path.dirname(dest_image_path), exist_ok=True)
+        img.save(dest_image_path)
+        base = os.path.splitext(filename)[0]
+        npy_path = os.path.join(args.dest, base + ".npy")
+        np.save(npy_path, camera_vec)
+        dataset["labels"].append([filename, base + ".npy"])
 
 
         # flipped_img = ImageOps.mirror(img)

@@ -25,9 +25,7 @@ for i, name in gpu_info:
 gpu_ids_str = ",".join(str(i) for i, _ in gpu_info)
 
 # Parameters
-pre_iterations = 1000
-post_iterations = 400
-dif_mult = 2 #higher numbers require more vram
+
 video_mult = 3
 output_dir = "./output/"
 image_dir = '/home/real_images/final_output'
@@ -44,29 +42,8 @@ network_path = "./networks/ffhqrebalanced512-128.pkl"
 
 for image_id in image_ids:
 
-    print("Start:", time.ctime())
-    print("Output directory:", output_dir)
-
-    command = (
-        f"PYTHONWARNINGS=\"ignore\" "
-        f"CUDA_VISIBLE_DEVICES={gpu_ids_str} python fine_tune_latent_space.py "
-        f"--outdir='{output_dir}' "
-        f"--network='{network_path}' "
-        f"--sample_mult={dif_mult} "
-        f"--image_path {image_dir}/{image_id}.png "
-        f"--c_path {image_dir}/{image_id}.npy "
-        f"--num_steps {pre_iterations} "
-        f"--num_steps_pti {post_iterations} "
-        f"--lamda_id {input_dict['lamda_id']} "
-        f"--lamda_origin {input_dict['lamda_origin']} "
-        f"--lamda_illumination {input_dict['lamda_illumination']}"
-    )
-    print(command)
-    os.system(command)
-
-    print("Phase 1 End:", time.ctime())
-    print("")
-    print("")
+    truncation = 1.0
+    save = '/home/output/test'
 
     output_dir_image = os.path.join(
         output_dir,
@@ -77,15 +54,13 @@ for image_id in image_ids:
 
     render_command = (
         f"PYTHONWARNINGS=\"ignore\" "
-        f"python gen_image_from_latent_code.py "
-        f"--outdir '{output_dir_image}' "
+        f"python gen_gif_from_latent_code.py "
+        f"--outdir '{save}' "
         f"--network '{output_dir_image}/checkpoints/fintuned_generator.pkl' "
         f"--latent '{output_dir_image}/checkpoints/{image_id}.npy' "
         f"--pose '{image_dir}/{image_id}.npy' "
-        f"--trunc 0.75 "
         f"--sample-mult 3"
     )
 
-    # print(render_command)
-    # os.system(render_command)
-    # print("RENDERED IMAGE WITH ORIGINAL POSE:", time.ctime())    
+    #print(render_command)
+    os.system(render_command)
