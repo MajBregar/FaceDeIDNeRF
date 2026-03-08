@@ -1,5 +1,5 @@
 import os
-
+from itertools import product
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -31,7 +31,7 @@ output_dir = "./output/"
 image_dir = '/home/real_images/final_output'
 save = '/home/deid'
 
-image_ids = ["memzl"]
+image_ids = ["memzl2"]
 input_dict = {
     "lamda_id": 1.0,
     "lamda_origin": 1.0,
@@ -39,12 +39,25 @@ input_dict = {
 
 
 
-modes = ['avg', 'true_rnd', 'rnd_avg_offset', 'mapping_rnd']
-mode = modes[0]
+modes = [
+    'avg',
+    'true_rnd',
+    'rnd_avg_offset',
+    'mapping_rnd',
+    'mapping_interp',
+    'w_noise',
+    'layer_mix',
+    'coarse_mix',
+    'fine_mix',
+    'pca_perturb',
+    'orthogonal_noise',
+    'style_shuffle'
+]
+#mode = modes[2]
 
 network_path = "./networks/ffhqrebalanced512-128.pkl"
 
-for image_id in image_ids:
+for image_id, mode in product(image_ids, modes):
 
 
     output_dir_image = os.path.join(

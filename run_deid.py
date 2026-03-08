@@ -21,15 +21,15 @@ gpu_info = [(i, torch.cuda.get_device_name(i)) for i in range(num_gpus)]
 gpu_ids_str = ",".join(str(i) for i, _ in gpu_info)
 
 # Parameters
-pre_iterations = 3
-post_iterations = 3
-dif_mult = 3 #higher numbers require more vram
+pre_iterations = 700
+post_iterations = 400
+dif_mult = 3 
 video_mult = 3
 image_deidentification_truncation = 0.7
 output_dir = "./output/"
 image_dir = '/home/real_images/final_output'
 
-image_ids = ["juli"]
+image_ids = ["memzl2"]
 input_dict = {
     "lamda_id": 1.0,
     "lamda_origin": 1.0

@@ -59,7 +59,6 @@ def main(
 
     G.eval()
 
-    # Improve NeRF sampling
     G.rendering_kwargs['depth_resolution'] = int(
         G.rendering_kwargs['depth_resolution'] * sample_mult
     )
@@ -70,9 +69,7 @@ def main(
     if nrr is not None:
         G.neural_rendering_resolution = nrr
 
-    # -------------------------------------------------------------------------
-    # Load latent
-    # -------------------------------------------------------------------------
+
     latent = np.load(latent_path)
     latent = torch.tensor(latent, device=device, dtype=torch.float32)
 
@@ -85,25 +82,18 @@ def main(
 
     print(f"[INFO] Latent shape: {latent.shape}")
 
-    # -------------------------------------------------------------------------
-    # Load camera
-    # -------------------------------------------------------------------------
     c = np.load(pose_path)
     assert c.shape == (25,), f"Expected pose shape (25,), got {c.shape}"
-
     c = torch.tensor(c, device=device, dtype=torch.float32).unsqueeze(0)
 
     print(f"[INFO] Camera pose loaded: {c.shape}")
 
-    # -------------------------------------------------------------------------
-    # Generate frames
-    # -------------------------------------------------------------------------
+
     trunc_values = np.arange(
         TRUNCATION_INTERVAL[0],
         TRUNCATION_INTERVAL[1] + TRUNCATION_STEP,
         TRUNCATION_STEP
     )
-
     frames = []
 
     for trunc in trunc_values:
@@ -112,22 +102,65 @@ def main(
 
         w = latent.clone()
 
-
         if deid_mode == 'avg':
             w_avg = G.backbone.mapping.w_avg
             w = w_avg + trunc * (w - w_avg)
+
         elif deid_mode == 'true_rnd':
             w_rand = torch.randn_like(w)
             w = w_rand + trunc * (w - w_rand)
+
         elif deid_mode == 'rnd_avg_offset':
             w_avg = G.backbone.mapping.w_avg
             noise = torch.randn_like(w_avg) * 0.1
             w_rand = w_avg + noise
             w = w_rand + trunc * (w - w_rand)
+
         elif deid_mode == 'mapping_rnd':
             z = torch.randn([1, G.z_dim], device=w.device)
             w_rand = G.mapping(z, c)
             w = w_rand + trunc * (w - w_rand)
+
+        elif deid_mode == 'mapping_interp':
+            z = torch.randn([1, G.z_dim], device=w.device)
+            w_rand = G.mapping(z, c)
+            alpha = trunc
+            w = alpha * w + (1 - alpha) * w_rand
+
+        elif deid_mode == 'w_noise':
+            noise = torch.randn_like(w) * (0.5 * trunc)
+            w = w + noise
+
+        elif deid_mode == 'layer_mix':
+            z = torch.randn([1, G.z_dim], device=w.device)
+            w_rand = G.mapping(z, c)
+            mix_layer = int(trunc * w.shape[1])
+            w[:, :mix_layer] = w_rand[:, :mix_layer]
+
+        elif deid_mode == 'coarse_mix':
+            z = torch.randn([1, G.z_dim], device=w.device)
+            w_rand = G.mapping(z, c)
+            w[:, :6] = w_rand[:, :6]
+
+        elif deid_mode == 'fine_mix':
+            z = torch.randn([1, G.z_dim], device=w.device)
+            w_rand = G.mapping(z, c)
+            w[:, 8:] = w_rand[:, 8:]
+
+        elif deid_mode == 'pca_perturb':
+            direction = torch.randn_like(w)
+            direction = direction / direction.norm()
+            w = w + trunc * direction
+
+        elif deid_mode == 'orthogonal_noise':
+            noise = torch.randn_like(w)
+            proj = (noise * w).sum() / (w * w).sum()
+            noise = noise - proj * w
+            w = w + trunc * noise
+
+        elif deid_mode == 'style_shuffle':
+            perm = torch.randperm(w.shape[1])
+            w = w[:, perm]
 
 
 
