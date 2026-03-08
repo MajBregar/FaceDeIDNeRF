@@ -62,14 +62,11 @@ def project(
         device: torch.device,
         initial_w=None,
         image_log_step=10,
-        illumination_interval=0,
         w_name: str,
-        relight_model,
-        illu_loss,
         id_loss,
         lamda_id,
         lamda_origin,
-        lamda_illumination,
+        image_output_enabled
 ):
     outdir = os.path.join(outdir, "pre")
     os.makedirs(outdir, exist_ok=True)
@@ -79,17 +76,13 @@ def project(
 
     weight_of_i_loss = lamda_id
     weight_of_original_loss = lamda_origin
-    weight_of_illu_loss = lamda_illumination
 
     logging.info("weight_of_i_loss: " + str(weight_of_i_loss))
     logging.info("weight_of_original_loss: " + str(weight_of_original_loss))
-    logging.info("weight_of_illu_loss: " + str(weight_of_illu_loss))
 
     assert target.shape == (G.img_channels, G.img_resolution, G.img_resolution)
     G = copy.deepcopy(G).eval().requires_grad_(False).to(device).float()
 
-    for p in relight_model.parameters():
-        p.requires_grad = False
 
     w_avg_path = './w_avg.npy'
     w_std_path = './w_std.npy'
@@ -193,7 +186,7 @@ def project(
 
         synth_images = G.synthesis(ws, c, noise_mode='const')['image']
 
-        if step % image_log_step == 0:
+        if image_output_enabled and step % image_log_step == 0:
             with torch.no_grad():
                 vis_img = (
                     synth_images.permute(0, 2, 3, 1) * 127.5 + 128
@@ -233,68 +226,6 @@ def project(
 
         logging.info(str(step) + " i_loss: " + str(i_loss.cpu().detach()))
         logging.info(str(step) + " original_loss: " + str(original_loss.cpu().detach()))
-
-        # ----------- Illumination loss control -----------
-        if illumination_interval > 0 and step % illumination_interval == 0:
-
-            random_draw = torch.rand(2)
-            theta = (random_draw[0] - 0.5) * 0.4
-            phi = (random_draw[1] - 0.5) * 0.4
-
-            side_cam2world_pose = LookAtPoseSampler.sample(
-                3.14 / 2 + theta,
-                3.14 / 2 + phi,
-                camera_lookat_point,
-                radius=2.7,
-                device=device
-            )
-
-            intrinsics = torch.tensor(
-                [[4.2647, 0, 0.5],
-                 [0, 4.2647, 0.5],
-                 [0, 0, 1]],
-                device=device
-            )
-
-            side_c = torch.cat(
-                [side_cam2world_pose.reshape(-1, 16),
-                 intrinsics.reshape(-1, 9)],
-                1
-            )
-
-            side_synth_images = G.synthesis(
-                ws,
-                side_c,
-                noise_mode='const'
-            )['image']
-
-            side_synth_images = (side_synth_images + 1) / 2.0
-            side_synth_images = F.interpolate(
-                side_synth_images,
-                size=(512, 512),
-                mode='area'
-            )
-
-            sh = SH_project_polar_function(
-                getLightIntensity,
-                phi,
-                theta
-            )
-            sh = np.array(sh) * 2.5
-
-            ill_loss = illu_loss(
-                relight_model,
-                sh,
-                side_synth_images,
-                torch.device('cuda')
-            )
-
-            logging.info(
-                str(step) + " illu loss: " +
-                str(f'{ill_loss.cpu().detach():.20f}')
-            )
-
-            dist = dist + ill_loss * weight_of_illu_loss
 
         # ----------- Noise regularization -----------
         reg_loss = 0.0
@@ -351,14 +282,12 @@ def project_pti(
         device: torch.device,
         initial_w=None,
         image_log_step=1,
-        illumination_interval=0,
         w_name: str,
-        relight_model,
-        illu_loss,
         id_loss,
         lamda_id,
         lamda_origin,
-        lamda_illumination,
+        image_output_enabled
+
 ):
     outdir = os.path.join(outdir, "post")
     os.makedirs(outdir, exist_ok=True)
@@ -368,11 +297,9 @@ def project_pti(
 
     weight_of_i_loss = lamda_id
     weight_of_original_loss = lamda_origin
-    weight_of_illu_loss = lamda_illumination
 
     logging.info("weight_of_i_loss: " + str(weight_of_i_loss))
     logging.info("weight_of_original_loss: " + str(weight_of_original_loss))
-    logging.info("weight_of_illu_loss: " + str(weight_of_illu_loss))
 
     assert target.shape == (G.img_channels, G.img_resolution, G.img_resolution)
 
@@ -384,9 +311,6 @@ def project_pti(
         betas=(0.9, 0.999),
         lr=initial_learning_rate
     )
-
-    for p in relight_model.parameters():
-        p.requires_grad = False
 
     camera_lookat_point = torch.tensor(
         G.rendering_kwargs['avg_camera_pivot'],
@@ -449,7 +373,7 @@ def project_pti(
             noise_mode='const'
         )['image'].to(torch.device('cuda:0'))
 
-        if step % image_log_step == 0:
+        if image_output_enabled and step % image_log_step == 0:
             with torch.no_grad():
                 vis_img = (
                     synth_images.permute(0, 2, 3, 1) * 127.5 + 128
@@ -490,61 +414,7 @@ def project_pti(
         logging.info(str(step) + " i_loss: " + str(i_loss.cpu().detach()))
         logging.info(str(step) + " original_loss: " + str(original_loss.cpu().detach()))
 
-        # -------- Illumination control --------
-        if illumination_interval > 0 and step % illumination_interval == 0:
-
-            random_draw = torch.rand(2)
-            theta = (random_draw[0] - 0.5) * 0.4
-            phi = (random_draw[1] - 0.5) * 0.4
-
-            side_cam2world_pose = LookAtPoseSampler.sample(
-                3.14 / 2 + theta,
-                3.14 / 2 + phi,
-                camera_lookat_point,
-                radius=2.7,
-                device=device
-            )
-
-            side_c = torch.cat(
-                [side_cam2world_pose.reshape(-1, 16),
-                 intrinsics.reshape(-1, 9)],
-                1
-            )
-
-            side_synth_images = G.synthesis(
-                w_pivot,
-                side_c,
-                noise_mode='const'
-            )['image'].to(torch.device('cuda:0'))
-
-            side_synth_images = (side_synth_images + 1) / 2.0
-            side_synth_images = F.interpolate(
-                side_synth_images,
-                size=(512, 512),
-                mode='area'
-            )
-
-            sh = SH_project_polar_function(
-                getLightIntensity,
-                phi,
-                theta
-            )
-            sh = np.array(sh) * 2.5
-
-            ill_loss = illu_loss(
-                relight_model,
-                sh,
-                side_synth_images,
-                torch.device('cuda:0')
-            )
-
-            logging.info(
-                str(step) + " illu loss: " +
-                str(f'{ill_loss.cpu().detach():.20f}')
-            )
-
-            dist = dist + ill_loss * weight_of_illu_loss
-
+        
         # -------- Noise regularization --------
         reg_loss = 0.0
         for v in noise_bufs.values():

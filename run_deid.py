@@ -25,27 +25,24 @@ for i, name in gpu_info:
 gpu_ids_str = ",".join(str(i) for i, _ in gpu_info)
 
 # Parameters
-pre_iterations = 2
-post_iterations = 2
-dif_mult = 2 #higher numbers require more vram
+pre_iterations = 50
+post_iterations = 50
+dif_mult = 3 #higher numbers require more vram
 video_mult = 3
 output_dir = "./output/"
 image_dir = '/home/real_images/final_output'
 
-image_ids = ["memzl"]
+image_ids = ["juli"]
 input_dict = {
         "lamda_id": 1.0, #0.2, 
-        "lamda_origin": 1.0, #0.2, 
-        "lamda_illumination": 0.0
+        "lamda_origin": 1.0 #0.2
 }
 
 
 network_path = "./networks/ffhqrebalanced512-128.pkl"
 
 for image_id in image_ids:
-
-    print("Start:", time.ctime())
-    print("Output directory:", output_dir)
+    print("Start:", time.ctime(), "Output Directory:", output_dir)
 
     command = (
         f"PYTHONWARNINGS=\"ignore\" "
@@ -59,20 +56,21 @@ for image_id in image_ids:
         f"--num_steps_pti {post_iterations} "
         f"--lamda_id {input_dict['lamda_id']} "
         f"--lamda_origin {input_dict['lamda_origin']} "
-        f"--lamda_illumination {input_dict['lamda_illumination']}"
+        f"--fine_tune_images_enabled {True} "
+        f"--pre_image_log_steps {20} "
+        f"--post_image_log_steps {10} "
     )
-    print(command)
+    #print(command)
     os.system(command)
 
-    print("Phase 1 End:", time.ctime())
+    print("Saved fine tuned generator -", time.ctime())
     print("")
     print("")
 
     output_dir_image = os.path.join(
         output_dir,
         f"{image_id}_"
-        f"{input_dict['lamda_id']}_{input_dict['lamda_origin']}_"
-        f"{input_dict['lamda_illumination']}"
+        f"{input_dict['lamda_id']}_{input_dict['lamda_origin']}"
     )
 
     render_command = (

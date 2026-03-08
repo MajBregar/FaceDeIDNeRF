@@ -33,12 +33,10 @@ from torch.autograd import Variable
 from torchvision.utils import make_grid
 from editors import w_plus_editor_WD
 from PIL import Image
-import cv2
 from utils_SH import *      # type: ignore
 from defineHourglass_512_gray_skip import *  # type: ignore
 #from criteria.clip_loss import CLIPLoss
 from criteria.id_loss import IDLoss
-from criteria.illu_loss import illu_loss
 from criteria.sd import StableDiffusion
 # ----------------------------------------------------------------------------
 
@@ -76,24 +74,18 @@ def parse_tuple(s: Union[str, Tuple[int, int]]) -> Tuple[int, int]:
 @click.command()
 @click.option('--network', 'network_pkl', help='Network pickle filename', required=True)
 @click.option('--outdir', help='Output directory', type=str, required=True, metavar='DIR')
-# @click.option('--latent_space_type', help='latent_space_type', type=click.Choice(['w', 'w_plus']), required=False, metavar='STR',
-#               default='w', show_default=True)
 @click.option('--image_path', help='image_path', type=str, required=True, metavar='STR', show_default=True)
 @click.option('--c_path', help='camera parameters path', type=str, required=True, metavar='STR', show_default=True)
-@click.option('--sample_mult', 'sampling_multiplier', type=float,
-              help='Multiplier for depth sampling in volume rendering', default=2, show_default=True)
-@click.option('--num_steps', 'num_steps', type=int,
-              help='Multiplier for depth sampling in volume rendering', default=1000, show_default=True)
-@click.option('--num_steps_pti', 'num_steps_pti', type=int,
-              help='Multiplier for depth sampling in volume rendering', default=400, show_default=True)
+@click.option('--sample_mult', 'sampling_multiplier', type=float, help='Multiplier for depth sampling in volume rendering', default=2, show_default=True)
+@click.option('--num_steps', 'num_steps', type=int, help='Multiplier for depth sampling in volume rendering', default=1000, show_default=True)
+@click.option('--num_steps_pti', 'num_steps_pti', type=int, help='Multiplier for depth sampling in volume rendering', default=400, show_default=True)
 @click.option('--nrr', type=int, help='Neural rendering resolution override', default=None, show_default=True)
-#@click.option('--light_sh', 'light_sh',type=str, help='input the relight sh', default="a person with blue hair", show_default=True)
-@click.option('--lamda_id', type=float,
-              help='id loss wright', default=0.6, show_default=True)
-@click.option('--lamda_origin', type=float,
-              help='origin loss wright', default=0.6, show_default=True)
-@click.option('--lamda_illumination', type=float,
-              help='diffusion loss wright', default=0.0, show_default=True) #0.1
+@click.option('--lamda_id', type=float, help='id loss wright', default=0.6, show_default=True)
+@click.option('--lamda_origin', type=float, help='origin loss wright', default=0.6, show_default=True)
+@click.option('--fine_tune_images_enabled', 'fine_tune_images_enabled', type=bool, help='Flag for enabling image generation during fine tuning', default=True, show_default=True)
+@click.option('--pre_image_log_steps', 'pre_image_log_steps', type=int, help='After how many steps should output image', default=100, show_default=True)
+@click.option('--post_image_log_steps', 'post_image_log_steps', type=int, help='After how many steps should output image', default=10, show_default=True)
+
 def run(
         network_pkl: str,
         outdir: str,
@@ -105,35 +97,22 @@ def run(
         num_steps_pti:int,
         lamda_id: float,
         lamda_origin: float,
-        lamda_illumination: float
+        fine_tune_images_enabled: bool,
+        pre_image_log_steps: int,
+        post_image_log_steps: int
 ):
-    """Render a latent vector interpolation video.
-    Examples:
-    \b
-    # Render a 4x2 grid of interpolations for seeds 0 through 31.
-    python gen_video.py --output=lerp.mp4 --trunc=1 --seeds=0-31 --grid=4x2 \\
-        --network=https://api.ngc.nvidia.com/v2/models/nvidia/research/stylegan3/versions/1/files/stylegan3-r-afhqv2-512x512.pkl
-    Animation length and seed keyframes:
-    The animation length is either determined based on the --seeds value or explicitly
-    specified using the --num-keyframes option.
-    When num keyframes is specified with --num-keyframes, the output video length
-    will be 'num_keyframes*w_frames' frames.
-    If --num-keyframes is not specified, the number of seeds given with
-    --seeds must be divisible by grid size W*H (--grid).  In this case the
-    output video length will be '# seeds/(w*h)*w_frames' frames.
-    """
-    
-    
+
     os.makedirs(outdir, exist_ok=True)
-    print('Loading networks from "%s"...' % network_pkl)
+    #print('Loading networks from "%s"...' % network_pkl)
+
     device = torch.device('cuda')
     with dnnlib.util.open_url(network_pkl) as f:
         network_data = legacy.load_network_pkl(f)
         G = network_data['G_ema'].to(device)  # type: ignore
 
     G.rendering_kwargs['depth_resolution'] = int(G.rendering_kwargs['depth_resolution'] * sampling_multiplier)
-    G.rendering_kwargs['depth_resolution_importance'] = int(
-        G.rendering_kwargs['depth_resolution_importance'] * sampling_multiplier)
+    G.rendering_kwargs['depth_resolution_importance'] = int(G.rendering_kwargs['depth_resolution_importance'] * sampling_multiplier)
+
     if nrr is not None: G.neural_rendering_resolution = nrr
 
     image = Image.open(image_path).convert('RGB')
@@ -151,26 +130,18 @@ def run(
     from_im = trans(image).cuda()
     id_image = torch.squeeze((from_im.cuda() + 1) / 2) * 255
 
-   
-    relight_model = HourglassNet() #type: ignore
-    relight_model.load_state_dict(torch.load("./networks/trained_model_03.t7"))
-    
     # Identity and guidance models
     id_loss = IDLoss()
-    relight_model = relight_model.to(torch.device('cuda'))
 
     # Output directory
     safe_name = (
         f"{image_name}_"
-        f"{lamda_id}_{lamda_origin}_{lamda_illumination}"
+        f"{lamda_id}_{lamda_origin}"
     ).replace(' ', '_')
 
     outdir = os.path.join(outdir, safe_name)
     os.makedirs(outdir, exist_ok=True)
 
-    # --------
-    # PRE / POST: W+ optimization (NeRF inversion + optional editing)
-    # --------
     w_plus = w_plus_editor_WD.project(
         G,
         c,
@@ -180,20 +151,13 @@ def run(
         w_avg_samples=600,
         w_name=image_name,
         num_steps=num_steps,
-        relight_model=relight_model,
-        illu_loss=illu_loss,
         id_loss=id_loss,
         lamda_id=lamda_id,
         lamda_origin=lamda_origin,
-        lamda_illumination=lamda_illumination,
+        image_output_enabled=fine_tune_images_enabled,
+        image_log_step=pre_image_log_steps
     )
 
-    # Re-initialize guidance for PTI phase (clean graph / memory)
-    relight_model = relight_model.to(torch.device('cuda:0'))
-
-    # --------
-    # PTI: Generator fine-tuning
-    # --------
     G_final = w_plus_editor_WD.project_pti(
         G,
         c,
@@ -204,18 +168,12 @@ def run(
         w_avg_samples=600,
         w_name=image_name,
         num_steps_pti=num_steps_pti,
-        relight_model=relight_model,
-        illu_loss=illu_loss,
         id_loss=id_loss,
         lamda_id=lamda_id,
         lamda_origin=lamda_origin,
-        lamda_illumination=lamda_illumination,
+        image_output_enabled=fine_tune_images_enabled,
+        image_log_step=post_image_log_steps
     )
-
-    
-
-
-
 
     outdir_ckeckpoints = os.path.join(outdir,"checkpoints")
     os.makedirs(outdir_ckeckpoints, exist_ok=True)
@@ -225,11 +183,6 @@ def run(
         network_data["G_ema"] = G_final.eval().requires_grad_(False).cpu()
         pickle.dump(network_data, f)
     
-    
-    # PTI_embedding_dir = f'./projector/PTI/embeddings/{image_name}'
-    # os.makedirs(PTI_embedding_dir,exist_ok=True)
-
-    #np.save(f'./projector/PTI/embeddings/{image_name}/{image_name}_{latent_space_type}.npy', w)
 
 # ----------------------------------------------------------------------------
 

@@ -3,6 +3,7 @@
 ## Installation
 
 ```bash
+cd FaceDeIDNeRF
 git submodule update --init --recursive
 
 source ~/miniconda3/etc/profile.d/conda.sh
@@ -35,9 +36,10 @@ bash download_image_preprocessing_models.sh
 
 
 ## Paper & Citation
-Link to [**Paper**](https://arxiv.org/abs/2306.00783) 
 
-If you find this work useful for your research, please cite our paper:
+This deidentification tool is based off the FaceDNeRF repository and paper:
+
+Link to [**Paper**](https://arxiv.org/abs/2306.00783) 
 
 ```bibtex
 @article{zhang2024facednerf,
