@@ -30,10 +30,11 @@ TRUNCATION_STEP = 0.02
 @click.option('--latent', 'latent_path', required=True)
 @click.option('--pose', 'pose_path', required=True)
 @click.option('--outdir', required=True)
-@click.option('--image-mode', type=click.Choice(['image', 'image_raw', 'image_depth']),
-              default='image', show_default=True)
+@click.option('--image-mode', type=click.Choice(['image', 'image_raw', 'image_depth']), default='image', show_default=True)
 @click.option('--sample-mult', default=2.0, show_default=True)
 @click.option('--nrr', default=None, type=int)
+@click.option('--deid_mode', 'deid_mode', type=str, default='avg', show_default=True)
+
 def main(
     network_pkl,
     latent_path,
@@ -41,7 +42,8 @@ def main(
     outdir,
     image_mode,
     sample_mult,
-    nrr
+    nrr,
+    deid_mode
 ):
 
     os.makedirs(outdir, exist_ok=True)
@@ -104,31 +106,31 @@ def main(
 
     frames = []
 
-    truncation_mode = ['avg', 'true_rnd', 'rnd_avg_offset', 'mapping_rnd']
-    select_trunc = 0
-
     for trunc in trunc_values:
 
-        print(f"[INFO] Rendering truncation={trunc:.3f}")
+        #print(f"[INFO] Rendering truncation={trunc:.3f}")
 
         w = latent.clone()
 
-        if trunc != 1.0:
-            if truncation_mode[select_trunc] == 'avg':
-                w_avg = G.backbone.mapping.w_avg
-                w = w_avg + trunc * (w - w_avg)
-            elif truncation_mode[select_trunc] == 'true_rnd':
-                w_rand = torch.randn_like(w)
-                w = w_rand + trunc * (w - w_rand)
-            elif truncation_mode[select_trunc] == 'rnd_avg_offset':
-                w_avg = G.backbone.mapping.w_avg
-                noise = torch.randn_like(w_avg) * 0.3
-                w_rand = w_avg + noise
-                w = w_rand + trunc * (w - w_rand)
-            elif truncation_mode[select_trunc] == 'mapping_rnd':
-                z = torch.randn([1, G.z_dim], device=w.device)
-                w_rand = G.mapping(z, c)
-                w = w_rand + trunc * (w - w_rand)
+
+        if deid_mode == 'avg':
+            w_avg = G.backbone.mapping.w_avg
+            w = w_avg + trunc * (w - w_avg)
+        elif deid_mode == 'true_rnd':
+            w_rand = torch.randn_like(w)
+            w = w_rand + trunc * (w - w_rand)
+        elif deid_mode == 'rnd_avg_offset':
+            w_avg = G.backbone.mapping.w_avg
+            noise = torch.randn_like(w_avg) * 0.1
+            w_rand = w_avg + noise
+            w = w_rand + trunc * (w - w_rand)
+        elif deid_mode == 'mapping_rnd':
+            z = torch.randn([1, G.z_dim], device=w.device)
+            w_rand = G.mapping(z, c)
+            w = w_rand + trunc * (w - w_rand)
+
+
+
 
         with torch.no_grad():
             out = G.synthesis(ws=w, c=c, noise_mode='const')
@@ -145,7 +147,7 @@ def main(
     # Save GIF
     # -------------------------------------------------------------------------
     name = os.path.splitext(os.path.basename(latent_path))[0]
-    gif_path = os.path.join(outdir, f"{name}_truncation.gif")
+    gif_path = os.path.join(outdir, f"{name}_deid_{deid_mode}.gif")
 
     frames[0].save(
         gif_path,
@@ -154,8 +156,6 @@ def main(
         duration=150,
         loop=0
     )
-
-    print(f"[SUCCESS] GIF saved → {gif_path}")
 
 # -----------------------------------------------------------------------------
 

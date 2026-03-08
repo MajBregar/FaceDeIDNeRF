@@ -133,15 +133,6 @@ def run(
     # Identity and guidance models
     id_loss = IDLoss()
 
-    # Output directory
-    safe_name = (
-        f"{image_name}_"
-        f"{lamda_id}_{lamda_origin}"
-    ).replace(' ', '_')
-
-    outdir = os.path.join(outdir, safe_name)
-    os.makedirs(outdir, exist_ok=True)
-
     w_plus = w_plus_editor_WD.project(
         G,
         c,
@@ -184,10 +175,8 @@ def run(
         pickle.dump(network_data, f)
     
 
-# ----------------------------------------------------------------------------
 
 if __name__ == "__main__":
     run()  # pylint: disable=no-value-for-parameter
 
-# ----------------------------------------------------------------------------
 

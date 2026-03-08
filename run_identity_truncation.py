@@ -29,27 +29,28 @@ gpu_ids_str = ",".join(str(i) for i, _ in gpu_info)
 video_mult = 3
 output_dir = "./output/"
 image_dir = '/home/real_images/final_output'
+save = '/home/deid'
 
 image_ids = ["memzl"]
 input_dict = {
-        "lamda_id": 1.0, #0.2, 
-        "lamda_origin": 1.0, #0.2, 
-        "lamda_illumination": 0.0
+    "lamda_id": 1.0,
+    "lamda_origin": 1.0,
 }
 
+
+
+modes = ['avg', 'true_rnd', 'rnd_avg_offset', 'mapping_rnd']
+mode = modes[0]
 
 network_path = "./networks/ffhqrebalanced512-128.pkl"
 
 for image_id in image_ids:
 
-    truncation = 1.0
-    save = '/home/output/test'
 
     output_dir_image = os.path.join(
         output_dir,
         f"{image_id}_"
-        f"{input_dict['lamda_id']}_{input_dict['lamda_origin']}_"
-        f"{input_dict['lamda_illumination']}"
+        f"{input_dict['lamda_id']}_{input_dict['lamda_origin']}"
     )
 
     render_command = (
@@ -59,7 +60,8 @@ for image_id in image_ids:
         f"--network '{output_dir_image}/checkpoints/fintuned_generator.pkl' "
         f"--latent '{output_dir_image}/checkpoints/{image_id}.npy' "
         f"--pose '{image_dir}/{image_id}.npy' "
-        f"--sample-mult 3"
+        f"--sample-mult 3 "
+        f"--deid_mode {mode}"
     )
 
     #print(render_command)
