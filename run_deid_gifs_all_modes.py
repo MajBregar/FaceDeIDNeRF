@@ -29,7 +29,7 @@ gpu_ids_str = ",".join(str(i) for i, _ in gpu_info)
 video_mult = 3
 output_dir = "./output/"
 image_dir = '/home/real_images/final_output'
-save = '/home/deid'
+save = '/home/deid_gifs'
 
 image_ids = ["memzl2"]
 input_dict = {
@@ -40,18 +40,21 @@ input_dict = {
 
 
 modes = [
-    'avg',
-    'true_rnd',
-    'rnd_avg_offset',
-    'mapping_rnd',
-    'mapping_interp',
-    'w_noise',
-    'layer_mix',
-    'coarse_mix',
-    'fine_mix',
-    'pca_perturb',
-    'orthogonal_noise',
-    'style_shuffle'
+    # 'avg',               # full-vector blend toward dataset average; drags age/sex/race toward the dataset mean too
+    # 'true_rnd',          # full-vector blend toward a random latent; randomizes demographics along with identity
+    # 'rnd_avg_offset',    # same problem as avg, just offset by small noise around w_avg
+    # 'mapping_rnd',       # full-vector blend toward a random mapped identity; no layer selectivity
+    # 'mapping_interp',    # full-vector interpolation; same lack of selectivity as mapping_rnd
+    # 'w_noise',           # isotropic noise across every layer; perturbs demographic-correlated layers equally
+    # 'layer_mix',         # always starts swapping from layer 0; hits coarse (age/sex) early, fine (race) at high trunc
+    # 'coarse_mix',        # only swaps coarse layers; mid layers stay intact, so identity barely changes
+    # 'fine_mix',          # only swaps fine layers; mostly just shifts skin tone/color, identity stays recognizable
+    # 'pca_perturb',       # full-vector perturbation along a random direction, not layer-restricted
+    # 'orthogonal_noise',  # full-vector perturbation, same lack of layer selectivity
+    # 'style_shuffle',     # permutes the layer axis itself; breaks facial coherence rather than de-identifying
+    'mid_mix',
+    'mid_avg',
+    'mid_interp',
 ]
 #mode = modes[2]
 
