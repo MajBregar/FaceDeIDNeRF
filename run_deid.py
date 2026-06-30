@@ -21,8 +21,8 @@ gpu_info = [(i, torch.cuda.get_device_name(i)) for i in range(num_gpus)]
 gpu_ids_str = ",".join(str(i) for i, _ in gpu_info)
 
 # Parameters
-pre_iterations = 700
-post_iterations = 400
+pre_iterations = 1200
+post_iterations = 600
 dif_mult = 3 
 video_mult = 3
 image_deidentification_truncation = 0.7

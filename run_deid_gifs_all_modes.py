@@ -42,8 +42,8 @@ input_dict = {
 modes = [
     # 'avg',               # full-vector blend toward dataset average; drags age/sex/race toward the dataset mean too
     # 'true_rnd',          # full-vector blend toward a random latent; randomizes demographics along with identity
-    # 'rnd_avg_offset',    # same problem as avg, just offset by small noise around w_avg
-    # 'mapping_rnd',       # full-vector blend toward a random mapped identity; no layer selectivity
+    'rnd_avg_offset',    # same problem as avg, just offset by small noise around w_avg
+    'mapping_rnd',       # full-vector blend toward a random mapped identity; no layer selectivity
     # 'mapping_interp',    # full-vector interpolation; same lack of selectivity as mapping_rnd
     # 'w_noise',           # isotropic noise across every layer; perturbs demographic-correlated layers equally
     # 'layer_mix',         # always starts swapping from layer 0; hits coarse (age/sex) early, fine (race) at high trunc
@@ -56,7 +56,6 @@ modes = [
     'mid_avg',
     'mid_interp',
 ]
-#mode = modes[2]
 
 network_path = "./networks/ffhqrebalanced512-128.pkl"
 
