@@ -119,6 +119,15 @@ def parse_args():
         ),
     )
     parser.add_argument(
+        "--generator-only",
+        action="store_true",
+        help=(
+            "Run W+ projection and PTI, then save the generator, pose, and "
+            "W+ tensors without latent editing, frame rendering, or GIF output. "
+            "This automatically enables --save-generator."
+        ),
+    )
+    parser.add_argument(
         "--overwrite",
         action="store_true",
         help="Reprocess images that already have an _SUCCESS marker.",
@@ -129,7 +138,12 @@ def parse_args():
         help="Enable PyTorch anomaly detection. This is slower.",
     )
 
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    if args.generator_only:
+        args.save_generator = True
+
+    return args
 
 
 def atomic_write_json(path, data):
@@ -207,7 +221,9 @@ def build_common_metadata(
             "device": str(device),
             "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
             "detect_anomaly": bool(args.detect_anomaly),
-            "export_gif": not args.no_gif,
+            "generator_only": bool(args.generator_only),
+            "latent_edit_rendering_enabled": not args.generator_only,
+            "export_gif": bool(not args.no_gif and not args.generator_only),
             "input_image_extension": ".png",
             "pose_extension": ".npy",
             "input_resize": [512, 512],
@@ -681,55 +697,70 @@ def process_image(
                     1,
                 )
 
-        update_state(
-            current_image=image_id,
-            stage="precomputing_latents",
-        )
-
-        w_rand_cache = (
-            latent_vector_edit.precompute_w_rand(
-                generator_final,
-                pose,
-            )
-        )
-
-        for mode_index, mode in enumerate(
-            args.modes,
-            start=1,
-        ):
-            check_stop()
-
+        if args.generator_only:
             update_state(
                 current_image=image_id,
-                stage="rendering",
-                current_mode=mode,
-                current_mode_index=mode_index,
-                total_modes=len(args.modes),
-            )
-
-            mode_dir = os.path.join(
-                temporary_output_dir,
-                mode,
-            )
-
-            frame_count = render_mode_frames(
-                generator=generator_final,
-                latent=latent,
-                pose=pose,
-                deid_mode=mode,
-                mode_dir=mode_dir,
-                w_rand_cache=w_rand_cache,
-                w_std=w_std,
-                truncation_values=truncation_values,
-                export_gif=not args.no_gif,
-                gif_duration_ms=args.gif_duration_ms,
+                stage="skipping_latent_edit_rendering",
+                current_mode=None,
+                current_mode_index=None,
+                total_modes=0,
             )
 
             print(
-                f"[{image_id}] Saved {frame_count} "
-                f"frames for {mode}",
+                f"[{image_id}] Generator-only mode: skipping latent "
+                "editing, frame rendering, and GIF generation.",
                 flush=True,
             )
+        else:
+            update_state(
+                current_image=image_id,
+                stage="precomputing_latents",
+            )
+
+            w_rand_cache = (
+                latent_vector_edit.precompute_w_rand(
+                    generator_final,
+                    pose,
+                )
+            )
+
+            for mode_index, mode in enumerate(
+                args.modes,
+                start=1,
+            ):
+                check_stop()
+
+                update_state(
+                    current_image=image_id,
+                    stage="rendering",
+                    current_mode=mode,
+                    current_mode_index=mode_index,
+                    total_modes=len(args.modes),
+                )
+
+                mode_dir = os.path.join(
+                    temporary_output_dir,
+                    mode,
+                )
+
+                frame_count = render_mode_frames(
+                    generator=generator_final,
+                    latent=latent,
+                    pose=pose,
+                    deid_mode=mode,
+                    mode_dir=mode_dir,
+                    w_rand_cache=w_rand_cache,
+                    w_std=w_std,
+                    truncation_values=truncation_values,
+                    export_gif=not args.no_gif,
+                    gif_duration_ms=args.gif_duration_ms,
+                )
+
+                print(
+                    f"[{image_id}] Saved {frame_count} "
+                    f"frames for {mode}",
+                    flush=True,
+                )
 
         check_stop()
 
@@ -790,6 +821,9 @@ def process_image(
             "generator_saved": bool(args.save_generator),
             "pose_saved": bool(args.save_generator),
             "w_plus_saved": bool(args.save_generator),
+            "generator_only": bool(args.generator_only),
+            "latent_edit_rendering_performed": not args.generator_only,
+            "rendered_modes": [] if args.generator_only else list(args.modes),
             "w_plus_shape": list(w_plus.shape),
             "render_w_plus_shape": list(latent.shape),
         }
@@ -1024,22 +1058,32 @@ def main():
         ]
     )
 
-    w_std = latent_vector_edit.load_w_std()
+    if args.generator_only:
+        w_std = None
+        truncation_values = np.array([], dtype=np.float32)
 
-    print(
-        f"[INFO] w_std={float(w_std):.4f}",
-        flush=True,
-    )
+        print(
+            "[INFO] Generator-only mode enabled: latent vector editing "
+            "and rendering will be skipped.",
+            flush=True,
+        )
+    else:
+        w_std = latent_vector_edit.load_w_std()
+
+        print(
+            f"[INFO] w_std={float(w_std):.4f}",
+            flush=True,
+        )
+
+        truncation_values = (
+            create_truncation_values(
+                args.trunc_min,
+                args.trunc_max,
+                args.trunc_step,
+            )
+        )
 
     id_loss = IDLoss()
-
-    truncation_values = (
-        create_truncation_values(
-            args.trunc_min,
-            args.trunc_max,
-            args.trunc_step,
-        )
-    )
 
     common_metadata = build_common_metadata(
         args=args,

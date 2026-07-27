@@ -10,6 +10,7 @@
 
 import copy
 import os
+import sys
 
 import numpy as np
 import torch
@@ -165,7 +166,7 @@ def project(
         buf[:] = torch.randn_like(buf)
         buf.requires_grad = True
 
-    for step in tqdm(range(num_steps)):
+    for step in tqdm(range(num_steps), file=sys.stdout, disable=not sys.stdout.isatty(), mininterval=10.0):
 
         t = step / num_steps
         w_noise_scale = w_std * initial_noise_factor * max(
@@ -356,7 +357,7 @@ def project_pti(
         buf[:] = torch.randn_like(buf)
         buf.requires_grad = True
 
-    for step in tqdm(range(num_steps_pti)):
+    for step in tqdm(range(num_steps_pti), file=sys.stdout, disable=not sys.stdout.isatty(), mininterval=10.0):
 
         t = step / num_steps_pti
         lr_ramp = min(1.0, (1.0 - t) / lr_rampdown_length)
