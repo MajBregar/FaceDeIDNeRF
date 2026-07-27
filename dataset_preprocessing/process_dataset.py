@@ -19,24 +19,40 @@ args = parser.parse_args()
 command = "python 01_batch_mtcnn.py --in_root " + args.indir
 print(command)
 os.system(command)
+print("MTCNN DONE")
 
 out_folder = args.indir.split("/")[-2] if args.indir.endswith("/") else args.indir.split("/")[-1]
+print("OUT FOLDER: ", out_folder)
 
 command = f"python 02_deep3drecon_test.py " + f"--img_folder={args.indir} --gpu_ids=0 --name=model --epoch=20"
 print(command)
 os.system(command)
+print("DEEP3DRECON DONE")
 
 # #crop out the input image
 command = "python 03_crop_images.py --indir=" + args.indir
 print(command)
 os.system(command)
+print("CROPS DONE")
 
 # # convert the pose to our format
 command = f"python 04_3dface2idr_mat.py --in_root {args.indir}/d3r_results --out_path {os.path.join(args.indir, 'crop', 'cameras.json')}"
 print(command)
 os.system(command)
+print("POSE FORMAT DONE")
 
 # # # additional correction to match the submission version
 command = f"python 05_preprocess_cameras.py --source {os.path.join(args.indir, 'crop')} --dest {args.indir}/final_output --mode orig"
 print(command)
 os.system(command)
+print("CAMERA PREP DONE")
+
+
+command = (
+    f"python 06_collect_dataset.py "
+    f"--indir {os.path.join(args.indir, 'final_output')} "
+    f"--outfile {os.path.join(args.indir, 'deid/images_to_process.txt')}"
+)
+print(command)
+os.system(command)
+print("DATASET COLLECTION DONE")

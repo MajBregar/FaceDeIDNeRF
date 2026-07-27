@@ -26,12 +26,12 @@ import latent_vector_edit
 
 
 network_path = "./networks/ffhqrebalanced512-128.pkl"
-dataset_dir = '/home/real_images/final_output'
-output_dir = "/home/deid_processed"
+dataset_dir = '/home/uniform_subset_debug/final_output'
+output_dir = "/home/uniform_subset_debug/deid"
 tmp_results_dir = './tmp_results'
 
-pre_iterations = 250
-post_iterations = 150
+pre_iterations = 300
+post_iterations = 300
 pti_sample_mult = 3
 gif_sample_mult = 3
 trunc_min, trunc_max, trunc_step = 0.0, 1.0, 0.1

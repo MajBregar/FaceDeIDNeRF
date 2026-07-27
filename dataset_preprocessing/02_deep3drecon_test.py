@@ -27,8 +27,8 @@ from scipy.io import loadmat, savemat
 
 def get_data_path(root='examples'):
     
-    im_path = [os.path.join(root, i) for i in sorted(os.listdir(root)) if i.endswith('png') or i.endswith('jpg') or i.endswith('jpeg')]
-    lm_path = [i.replace('png', 'txt').replace('jpg', 'txt').replace('jpeg', 'txt') for i in im_path]
+    im_path = [os.path.join(root, i) for i in sorted(os.listdir(root)) if i.endswith('png') or i.endswith('jpg') or i.endswith('jpeg') or i.endswith("JPG")]
+    lm_path = [i.replace('png', 'txt').replace('jpg', 'txt').replace('jpeg', 'txt').replace('JPG', 'txt') for i in im_path]
     lm_path = [os.path.join(i.replace(i.split(os.path.sep)[-1],''),'detections',i.split(os.path.sep)[-1]) for i in lm_path]
 
     return im_path, lm_path
@@ -61,7 +61,7 @@ def main(rank, opt, name='examples'):
 
     for i in range(len(im_path)):
         print(i, im_path[i])
-        img_name = im_path[i].split(os.path.sep)[-1].replace('.png','').replace('.jpg','').replace('.jpeg','')
+        img_name = im_path[i].split(os.path.sep)[-1].replace('.png','').replace('.jpg','').replace('.jpeg','').replace('.JPG', "")
 
         if not os.path.isfile(lm_path[i]):
             print("%s is not found !!!"%lm_path[i])
