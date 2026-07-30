@@ -26,9 +26,6 @@ import traceback
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
-# Do not override CUDA_VISIBLE_DEVICES here. Slurm should control GPU visibility.
-os.environ.setdefault("PYTORCH_ROCM_F64", "0")
-
 import numpy as np
 import torch
 from PIL import Image

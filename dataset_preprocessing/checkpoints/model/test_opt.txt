@@ -12,7 +12,7 @@
           eval_batch_nums: inf                           
                     focal: 1015.0                        
                   gpu_ids: 0                             
-               img_folder: /home/container_output/age_sex_dataset/	[default: examples]
+               img_folder: /home/container_output/age_sex_dataset_2	[default: examples]
                 init_path: checkpoints/init_model/resnet50-0676ba61.pth
                   isTrain: False                         	[default: None]
                     model: facerecon                     
