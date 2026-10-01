@@ -1,4 +1,11 @@
-## WIP Deidentification Tool using NeRFs
+## Facial Deidentification Tool Using Neural Radiance Fields - FaceDeIDNeRF
+
+This tool supports research into face deidentification using Neural Radiance Fields (NeRFs). The codebase is configured for batch processing on an HPC cluster with an A100 GPU.
+
+Read the [final research report](report/IBB_NeRF_Deidentification.pdf) for the findings.
+
+<p align="center"><img src="report/image_showcase.png" alt="Images" width="80%"></p>
+
 
 ## Installation
 
